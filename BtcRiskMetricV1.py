@@ -16,6 +16,22 @@ from datetime import date, timedelta
 warnings.filterwarnings('ignore')
 
 df = quandl.get("BCHAIN/MKPRU", api_key="FYzyusVT61Y4w65nFESX").reset_index()
+
+# get data thats not in the quandl database
+new_data = yf.download(tickers='BTC-USD', start='2024-01-01', interval='1d')
+
+# restructure yf dataframe to match the quandl one
+new_data.reset_index(inplace=True)
+new_data.rename(columns={'Date': 'Date', 'Open': 'Value'}, inplace=True)
+new_data = new_data[['Date', 'Value']]
+
+# append yf dataframe to the quandl dataframe
+df = pd.concat([df, new_data], ignore_index=True)
+
+# remove duplicates and sort by date to prevent any issues
+df.drop_duplicates(subset='Date', keep='first', inplace=True)
+df.sort_values(by='Date', inplace=True)
+
 btcdata = yf.download(tickers='BTC-USD', period="1d", interval="1m")["Close"]
 df.loc[len(df)] = [date.today(), btcdata.iloc[-1]]
 
